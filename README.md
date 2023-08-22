@@ -20,6 +20,10 @@ The proxy parameters are:
 ```shell
 KONG_NGINX_HTTP_CLIENT_BODY_BUFFER_SIZE=32M 
 ```
+2) Start the Kong Gateway:
+```shell
+./dockerExec/kong-gateway.sh
+```
 
 ## Plugin Installation
 1) Create a Gateway Service (Upstream URL: `http://httpbin.apim.eu/anything`)
