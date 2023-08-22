@@ -1,4 +1,11 @@
-# Kong plugin: detect a malware in the request Body by using Virus Total REST API
+# Kong plugin: detect a malware in the request Body by using [VirusTotal (VT)](https://virustotal.com) REST API
+
+The VirusTotal parameters are:
+- `virustotal_endpoint_to_upload_file`: VirusTotal Endpoint to upload the file to analyze
+- `virustotal_malicious_percentage_threshold`: the threshold of malicious percentage to establish that a file has a malware (VirtusTotal has many sources and some sources say that there is a malware and other sources say that there is no malware)
+- `virustotal_retries_nb`: number of retries to call `/analyses` API. Once the VT Upload API is called the plugin calls the VT `/analyses` API until `data.attributes.status` is `completed`or the plugin reach the value
+- `virustotal_retries_sleep`: duration (in second) to sleep between each retry
+- `virustotal_x_apikey`: x-apikey value provided by VT
 
 The proxy parameters are:
 - `http_proxy`: an URI to a proxy server to be used with HTTP requests

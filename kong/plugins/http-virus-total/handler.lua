@@ -6,6 +6,15 @@ local HttpVirusTotal = {
   VERSION = '1.0.0',
 }
 
+---------------------------
+-- Return the table length
+---------------------------
+local function tableLength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
 ---------------------------------------------------------------------------------------------------
 -- Executed for every request from a client and before it is being proxied to the upstream service
 ---------------------------------------------------------------------------------------------------
@@ -97,10 +106,16 @@ function HttpVirusTotal:access(conf)
     ["x-apikey"] = conf.virustotal_x_apikey,
   }
   local completed = false
+
   while not errMsg and not completed do
-    if nb < conf.virustotal_retries_nb then
-      
-      kong.log.notice(fmt("call VirusTotal Analyze file | count: %d/%d | req: '%s'", nb + 1, conf.virustotal_retries_nb, dataUploadVT.data.links.self))
+    if nb <= conf.virustotal_retries_nb then
+
+      if nb > 0 then
+        kong.log.notice(fmt("Do a %ds sleep before calling VirusTotal Analyze file", conf.virustotal_retries_sleep))
+        ngx.sleep(conf.virustotal_retries_sleep)
+      end
+
+      kong.log.notice(fmt("call VirusTotal Analyze file | count: %d/%d | req: '%s'", nb, conf.virustotal_retries_nb, dataUploadVT.data.links.self))
 
       res, err = httpc:request_uri(dataUploadVT.data.links.self, {
         method = "GET",
@@ -108,6 +123,8 @@ function HttpVirusTotal:access(conf)
         keepalive_timeout = 60,
         keepalive_pool = 10
       })
+      nb = nb + 1
+
       -- If there is an error during the call to VirusTotal
       if not res then
         errMsg = "Failed to analyze the file on VirusTotal | Req: '" .. dataUploadVT.data.links.self .. "' | Err: " .. err
@@ -134,14 +151,14 @@ function HttpVirusTotal:access(conf)
                           dataUploadVT.data.links.self,
                           res.status,
                           res.body)
-          -- Else if the Analyze is not still completed
-          elseif dataAnalyzeVT.data.attributes.status ~= 'completed' then
-            nb = nb + 1
-            ngx.sleep(conf.virustotal_retries_sleep)
-          else
-            -- If we can't find the 'data.attributes.stats.malicious' JSON property
-            if not (dataAnalyzeVT.data.attributes.stats and dataAnalyzeVT.data.attributes.stats.malicious) then
-              errMsg = fmt("Failure to get 'data.attributes.stats.malicious' for file Analysis on VirusTotal | req: '%s' | HTTP status: %d | body: %s", 
+          -- Else if the Analyze is completed
+          elseif dataAnalyzeVT.data.attributes.status == 'completed' then
+            -- If we can't find the 'data.attributes.stats.malicious' or 'data.attributes.results' JSON property
+            if not (dataAnalyzeVT.data.attributes.stats and 
+                    dataAnalyzeVT.data.attributes.stats.malicious and 
+                    dataAnalyzeVT.data.attributes.results and 
+                    tableLength(dataAnalyzeVT.data.attributes.results) ~= 0) then
+              errMsg = fmt("Failure to get 'data.attributes.stats.malicious' or 'data.attributes.results' for file Analysis on VirusTotal | req: '%s' | HTTP status: %d | body: %s", 
                             dataUploadVT.data.links.self,
                             res.status,
                             res.body)
@@ -153,7 +170,7 @@ function HttpVirusTotal:access(conf)
       end
     -- Maxixum number of retries is reached
     else
-      errMsg = fmt("Failed to analyze the file on VirusTotal | req: '%s' | Reached the maximum number of retries: %d | HTTP status: %d | body: %s", 
+      errMsg = fmt("Failed to analyze the file on VirusTotal | req: '%s' | Reached the maximum number of tries: %d | HTTP status: %d | body: %s", 
                     dataUploadVT.data.links.self,
                     nb,
                     res.status,
@@ -170,7 +187,9 @@ function HttpVirusTotal:access(conf)
     end
     kong.response.exit(500, exitErr, {["Content-Type"] = "application/json"})
   else
-    if tonumber(dataAnalyzeVT.data.attributes.stats.malicious) > 0 then
+    -- Calculate the percentage of Malicious VT sources in comparison with the total of VT Sources
+    local totalResultsVT = tonumber(tableLength(dataAnalyzeVT.data.attributes.results))
+    if (tonumber(dataAnalyzeVT.data.attributes.stats.malicious) / totalResultsVT) * 100 >= tonumber(conf.virustotal_malicious_percentage_threshold) then
       errMsg = "The file has a malware"
       kong.log.err(errMsg)
       exitErr["Error"] = errMsg
