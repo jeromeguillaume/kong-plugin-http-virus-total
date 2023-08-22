@@ -1,5 +1,6 @@
 # Kong plugin: detect a malware in the request Body by using [VirusTotal (VT)](https://virustotal.com) REST API
 
+## Plugin parameters
 The VirusTotal parameters are:
 - `virustotal_endpoint_to_upload_file`: VirusTotal Endpoint to upload the file to analyze
 - `virustotal_malicious_percentage_threshold`: the threshold of malicious percentage to establish that a file has a malware (VirtusTotal has many sources and some sources say that there is a malware and other sources say that there is no malware)
@@ -15,4 +16,28 @@ The proxy parameters are:
 - `no_proxy`: a comma separated list of hosts that should not be proxied.
  
 
- http -v -f POST https://www.virustotal.com/api/v3/files x-apikey:10f691334364c4da44dd3899c886ecae9310d1a17293f7b1ea854218c2255aff file@'./virus/eicar.com'   
+## Plugin Installation
+1) Create a Gateway Service (Upstream URL: `http://httpbin.apim.eu/anything`)
+2) Create a Route (path: `/httpbin`) on the Gateway Service (created before)
+3) Install the `http-virus-total` plugin on the Gateway Service (created before) and configure at least the `virustotal_x_apikey`
+
+## Examples: request the `http-virus-total` plugin
+1) PDF file: no malware
+```shell
+http -v -f POST :8000/httpbin file@'./virus/sampleOk.pdf'
+```
+2) TXT file: no malware
+```shell
+http -v -f POST :8000/httpbin file@'./virus/fileOk.txt'
+```
+**3) eicar.com file: tnere is malware**
+```shell
+http -v -f POST :8000/httpbin file@'./virus/eicar.com'
+```
+The `http-virus-total` plugin returns:
+```json
+HTTP/1.1 500 Internal Server Error
+{
+    "Error": "The file has a malware"
+}
+```
