@@ -16,7 +16,7 @@ The proxy parameters are:
 - `no_proxy`: a comma separated list of hosts that should not be proxied.
 
 ## Kong Gateway configuration
-1) Change the `nginx_http_client_body_buffer_size` property and put the maximum value supported by the VT [Upload File API](https://developers.virustotal.com/reference/files-scan) (i.e. 32MB)
+1) Change the `nginx_http_client_body_buffer_size` property and put the maximum value supported by the [VT Upload File API](https://developers.virustotal.com/reference/files-scan) (i.e. 32MB)
 ```shell
 KONG_NGINX_HTTP_CLIENT_BODY_BUFFER_SIZE=32M 
 ```
