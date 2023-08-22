@@ -33,7 +33,7 @@ docker run -d --name kong-gateway-http-virus-total \
  -e "KONG_PROXY_ERROR_LOG=/dev/stderr" \
  -e "KONG_ADMIN_ERROR_LOG=/dev/stderr" \
  -e "KONG_PLUGINS=bundled,http-virus-total" \
- -e "KONG_NGINX_HTTP_CLIENT_BODY_BUFFER_SIZE=50M" \
+ -e "KONG_NGINX_HTTP_CLIENT_BODY_BUFFER_SIZE=32M" \
  -e "KONG_ADMIN_LISTEN=0.0.0.0:8001" \
  -e "KONG_ADMIN_GUI_URL=http://localhost:8002" \
  -e KONG_LICENSE_DATA \
@@ -47,4 +47,8 @@ docker run -d --name kong-gateway-http-virus-total \
  -p 8004:8004 \
  kong/kong-gateway:3.4.0.0
  
+ 
  echo 'docker logs -f kong-gateway-http-virus-total'
+
+ 
+ 
