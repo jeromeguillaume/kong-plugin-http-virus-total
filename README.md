@@ -14,7 +14,12 @@ The proxy parameters are:
 - `https_proxy`: an URI to a proxy server to be used with HTTPS requests
 - `https_proxy_authorization`: as http_proxy_authorization but for use with https_proxy (since with HTTPS the authorisation is done when connecting, this one cannot be overridden by passing the Proxy-Authorization request header).
 - `no_proxy`: a comma separated list of hosts that should not be proxied.
- 
+
+## Kong Gateway configuration
+1) Change the `nginx_http_client_body_buffer_size` property and put the maximum value supported by the VT [Upload File API](https://developers.virustotal.com/reference/files-scan) (i.e. 32MB)
+```shell
+KONG_NGINX_HTTP_CLIENT_BODY_BUFFER_SIZE=32M 
+```
 
 ## Plugin Installation
 1) Create a Gateway Service (Upstream URL: `http://httpbin.apim.eu/anything`)
