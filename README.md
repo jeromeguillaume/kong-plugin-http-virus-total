@@ -39,7 +39,7 @@ http -v -f POST :8000/httpbin file@'./virus/sampleOk.pdf'
 ```shell
 http -v -f POST :8000/httpbin file@'./virus/fileOk.txt'
 ```
-3) **eicar.com file: tnere is malware**
+3) **eicar.com file: there is malware**
 ```shell
 http -v -f POST :8000/httpbin file@'./virus/eicar.com'
 ```
